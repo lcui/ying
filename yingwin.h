@@ -20,7 +20,7 @@ public:
 
 protected slots:
     void onTreeItemClicked (QTreeWidgetItem *item, int column);
-    void onTreeItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
+    void onCmtsTreeItemClicked(QTreeWidgetItem *item, int column);
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);

@@ -30,6 +30,7 @@ public:
     QStringList getCommitContent(const QString& commit);
     QString     getRootDir(const QString& file);
     QStringList getWorkspaceFiles(const QString& file, const QString& commit);
+    QStringList getCommitsDiff(const QString& file, const QString& commit1, const QString& commit2);
 
 private:
     QByteArray run(const QString& cmd);

@@ -211,6 +211,27 @@ GitEngine::getCommitContent(const QString& commit)
     return retlist;
 }
 
+QStringList 
+GitEngine::getCommitsDiff(const QString& file, const QString& commit1, const QString& commit2)
+{
+    QString cmd = mGitPath + QObject::tr(" diff -w %1 %2 -- %3").arg(commit1).
+                                                              arg(commit2).
+                                                              arg(file);
+
+    QByteArray output = run(cmd);
+    QList<QByteArray> slist = output.split('\n');
+
+    QStringList retlist;
+
+    for(int i=0; i<slist.length(); i++) {
+        if (slist[i].length()) {
+            retlist << slist[i];
+        }
+    }
+
+    return retlist;
+}
+
 QString
 GitEngine::getEngine()
 {

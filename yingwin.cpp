@@ -76,8 +76,9 @@ YingWin::YingWin(QWidget *parent, Qt::WindowFlags flags)
     QTreeWidget *tree = new QTreeWidget(commit);
     tree->setColumnCount(3);
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    connect(tree, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), 
-            this, SLOT(onTreeItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
+    connect(tree,SIGNAL(itemClicked(QTreeWidgetItem*, int)), 
+            this, SLOT(onCmtsTreeItemClicked(QTreeWidgetItem*, int)));
+
     mMapInfoWin.insert("CommitList", tree);
     commit->addWidget(tree);
 
@@ -112,21 +113,36 @@ YingWin::onTreeItemClicked (QTreeWidgetItem *item, int column)
 }
 
 void 
-YingWin::onTreeItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem *prev)
+YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
 {
     if (curr) {
-        QString commit = curr->toolTip(0);
-        QStringList files = mpEngine->getCommitFileList(commit, NULL);
-        QListWidget *fileList = qobject_cast<QListWidget*>(mMapInfoWin["CommitFiles"]);
-        fileList->clear();
-        for(int i=0; i<files.length(); i++) {
-            fileList->addItem(files[i]);
-        }
-
-        QStringList content = mpEngine->getCommitContent(commit);
+        QTreeWidget* tree = qobject_cast<QTreeWidget*>(mMapInfoWin["CommitList"]);
+        QList<QTreeWidgetItem *> tlst = tree->selectedItems();
+        //printf("tlst->length()=%d\n", tlst.length());
         QString str;
-        for(int i=0; i<content.length(); i++) {
-            str += content[i]+"\n";
+        if (tlst.length() == 1) {
+            QString commit = curr->toolTip(0);
+            QStringList files = mpEngine->getCommitFileList(commit, NULL);
+            QListWidget *fileList = qobject_cast<QListWidget*>(mMapInfoWin["CommitFiles"]);
+            fileList->clear();
+            for(int i=0; i<files.length(); i++) {
+                fileList->addItem(files[i]);
+            }
+
+            QStringList content = mpEngine->getCommitContent(commit);
+            for(int i=0; i<content.length(); i++) {
+                str += content[i]+"\n";
+            }
+        } else if (tlst.length() == 2) {
+            QString commit1 = tlst[0]->toolTip(0);
+            QString commit2 = tlst[1]->toolTip(0);
+
+            QStringList content = mpEngine->getCommitsDiff(mCurrFile, commit1, commit2);
+            for(int i=0; i<content.length(); i++) {
+                str += content[i]+"\n";
+            }
+        } else {
+            /* remove others */
         }
 
         mpBrowser->setText(str);
