@@ -25,6 +25,7 @@
 #include <QListWidget>
 #include <QTreeWidget>
 #include <QHeaderView>
+#include <QRegExp>
 #include <cassert>
 
 const char compName[] = "Daydayup Inc.";
@@ -59,14 +60,24 @@ YingWin::YingWin(QWidget *parent, Qt::WindowFlags flags)
     }
 
     QSplitter *splitter = new QSplitter(this);
-    QTreeWidget *pTreeHdrs = new QTreeWidget(splitter);
+    QWidget* dummy = new QWidget(splitter);
+    QVBoxLayout *vbox = new QVBoxLayout();
+
+    vbox->addWidget(new QLabel("File Filter:", dummy));
+    mpFileFilter = new QLineEdit("*.*", dummy);
+    connect(mpFileFilter, SIGNAL(editingFinished()), this, SLOT(onNewFileFilter()));
+    vbox->addWidget(mpFileFilter);
+    vbox->addWidget(new QLabel("File List:", dummy));
+    QTreeWidget *pTreeHdrs = new QTreeWidget(dummy);
     pTreeHdrs->setColumnCount(1);
     pTreeHdrs->setHeaderHidden(true);
     connect(pTreeHdrs, SIGNAL(itemClicked(QTreeWidgetItem*, int)), 
             this, SLOT(onTreeItemClicked(QTreeWidgetItem*, int)));
     mMapInfoWin.insert("FileList", pTreeHdrs);
-    splitter->addWidget(pTreeHdrs);
+    vbox->addWidget(pTreeHdrs);
 
+    dummy->setLayout(vbox);
+    splitter->addWidget(dummy);
 
     QSplitter *right = new QSplitter(Qt::Vertical, splitter);
 
@@ -188,6 +199,23 @@ YingWin::dropEvent(QDropEvent *event)
     event->acceptProposedAction();
 }
 
+static bool 
+isFiltered(const QString filter, const QString file)
+{
+    QString newf = filter+"$";
+    newf.replace(".", "\.");
+    newf.replace("*", ".*");
+    QRegExp reg(newf);
+    return !file.contains(reg);
+}
+
+void
+YingWin::onNewFileFilter()
+{
+    mCurrRoot = ""; /* force to update workspace */
+    analyzeFile(mCurrFile);
+}
+
 void
 YingWin::fillWorkspace(const QStringList& files, const QString& commit, const QString& name)
 {
@@ -199,6 +227,7 @@ YingWin::fillWorkspace(const QStringList& files, const QString& commit, const QS
     QTreeWidgetItem *root = new QTreeWidgetItem(tree);
     root->setText(0, name);
     branches[0] = root;
+    QString filter = mpFileFilter->text();
 
     /* assume the result is sorted */
     for(int i=0; i<files.length(); i++) {
@@ -207,13 +236,16 @@ YingWin::fillWorkspace(const QStringList& files, const QString& commit, const QS
             continue;
         }
         QStringList dirs = t.split("/");
-        for(int j=0; j<dirs.length(); j++) {
+        int len = dirs.length();
+        for(int j=0; j<len; j++) {
             const QString &d = dirs[j];
             if (!branches[j+1] || branches[j+1]->text(0) != d){
-                QTreeWidgetItem *node = new QTreeWidgetItem(branches[j]);
-                node->setText(0, d);
-                node->setToolTip(0, t);
-                branches[j+1] = node;
+                if ((j != (len-1)) || !isFiltered(filter, d)) {
+                    QTreeWidgetItem *node = new QTreeWidgetItem(branches[j]);
+                    node->setText(0, d);
+                    node->setToolTip(0, t);
+                    branches[j+1] = node;
+                }
             }
         }
     }

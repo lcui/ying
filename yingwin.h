@@ -8,6 +8,7 @@ class GitEngine;
 class QTextBrowser;
 class QTreeWidgetItem;
 class QListWidgetItem;
+class QLineEdit;
 class YingWin : public QMainWindow
 {
     Q_OBJECT
@@ -21,6 +22,7 @@ public:
 protected slots:
     void onTreeItemClicked (QTreeWidgetItem *item, int column);
     void onCmtsTreeItemClicked(QTreeWidgetItem *item, int column);
+    void onNewFileFilter();
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
@@ -31,6 +33,7 @@ protected:
 private:
     GitEngine       *mpEngine;
     QTextBrowser    *mpBrowser;
+    QLineEdit       *mpFileFilter;
     QMap<QString, QWidget*> mMapInfoWin;
     QString         mCurrRoot;
     QString         mCurrFile;
