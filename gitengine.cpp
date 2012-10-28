@@ -196,7 +196,7 @@ GitEngine::getCommitFileList(const QString& commit, const char* flags)
 QStringList 
 GitEngine::getCommitContent(const QString& commit)
 {
-    QString cmd = mGitPath + QObject::tr(" show %1").arg(commit);
+    QString cmd = mGitPath + QObject::tr(" show -w %1").arg(commit);
     QByteArray output = run(cmd);
     QList<QByteArray> slist = output.split('\n');
 

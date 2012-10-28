@@ -1,8 +1,7 @@
 #include "yingwin.h"
 #include "gitengine.h"
+#include "txt2html.h"
 
-#include <QTextBrowser>
-#include <QMouseEvent>
 #include <QFileDialog>
 #include <QSettings>
 #include <QFileInfo>
@@ -21,7 +20,6 @@
 #include <qdebug.h>
 #include <QTimer>
 #include <QDate>
-#include <QMenu>
 #include <QDockWidget>
 #include <QSplitter>
 #include <QListWidget>
@@ -119,7 +117,8 @@ YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
         QTreeWidget* tree = qobject_cast<QTreeWidget*>(mMapInfoWin["CommitList"]);
         QList<QTreeWidgetItem *> tlst = tree->selectedItems();
         //printf("tlst->length()=%d\n", tlst.length());
-        QString str;
+        YTxt2Html txt2html;
+        txt2html.prepare();
         if (tlst.length() == 1) {
             QString commit = curr->toolTip(0);
             QStringList files = mpEngine->getCommitFileList(commit, NULL);
@@ -131,7 +130,7 @@ YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
 
             QStringList content = mpEngine->getCommitContent(commit);
             for(int i=0; i<content.length(); i++) {
-                str += content[i]+"\n";
+                txt2html.append((content[i]+'\n').toStdString());
             }
         } else if (tlst.length() == 2) {
             QString commit1 = tlst[0]->toolTip(0);
@@ -139,13 +138,13 @@ YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
 
             QStringList content = mpEngine->getCommitsDiff(mCurrFile, commit1, commit2);
             for(int i=0; i<content.length(); i++) {
-                str += content[i]+"\n";
+                txt2html.append((content[i]+'\n').toStdString());
             }
         } else {
             /* remove others */
         }
 
-        mpBrowser->setText(str);
+        mpBrowser->setHtml(txt2html.finish().c_str());
     } else {
         /* FIXME: choose the 1st item? */
     }
