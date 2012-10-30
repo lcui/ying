@@ -30,6 +30,9 @@ GitEngine::getFileLog(const QString& file)
             }
             if (str.startsWith("commit ")) {
                 one->id = str.split(" ")[1];
+                if (one->id == "Invalid") {
+                    one->id = "";
+                }
             } else if (str.startsWith("Author:")) {
                 one->author = str.right(str.length()-7);
             } else if (str.startsWith("Date:")) {
@@ -47,11 +50,21 @@ GitEngine::getFileLog(const QString& file)
 QStringList 
 GitEngine::getFileLog(const QString& file, const char* flags)
 {
-    QString cmd = mGitPath + " log " + file;
-    QByteArray output = run(cmd);
+    QStringList retlist;
+    QString cmd;
+    QByteArray output;
+
+    /* check not committed TOT changes */
+    cmd = mGitPath + " diff --name-only " + file;
+    output = run(cmd);
+    if (!output.isEmpty()) {
+        retlist << "commit Invalid\nAuthor: xxx\nDate: xxx\n***Not committed changes***";
+    }
+        
+    cmd = mGitPath + " log " + file;
+    output = run(cmd);
 
     QList<QByteArray> slist = output.split('\n');
-    QStringList retlist;
 
     QString oneCommit;
     for(int i=0; i<slist.length(); i++) {
@@ -109,6 +122,49 @@ GitEngine::getFileCommitList(const QString& file, const char* flags)
         if (slist[i].length()) {
             QString line = slist[i];
             retlist << line.split(" ")[0];
+        }
+    }
+
+    return retlist;
+}
+
+QStringList
+GitEngine::getCommitBranchList(const QString& commit)
+{
+    QStringList retlist;
+    if (!commit.isEmpty()) {
+        QString cmd = mGitPath + 
+            QObject::tr(" branch --contains ") + commit;
+
+        QByteArray output = run(cmd);
+
+        QList<QByteArray> slist = output.split('\n');
+
+        for(int i=0; i<slist.length(); i++) {
+            if (slist[i].length()) {
+                retlist << slist[i];
+            }
+        }
+    }
+
+    return retlist;
+}
+
+QStringList
+GitEngine::getCommitTagList(const QString& commit)
+{
+    QStringList retlist;
+    if (!commit.isEmpty()) {
+        QString cmd = mGitPath + " tag --points-at " + commit;
+
+        QByteArray output = run(cmd);
+
+        QList<QByteArray> slist = output.split('\n');
+
+        for(int i=0; i<slist.length(); i++) {
+            if (slist[i].length()) {
+                retlist << slist[i];
+            }
         }
     }
 
@@ -178,7 +234,12 @@ GitEngine::getWorkspaceFiles(const QString& file, const QString& commit)
 QStringList 
 GitEngine::getCommitFileList(const QString& commit, const char* flags)
 {
-    QString cmd = mGitPath + QObject::tr(" show --pretty=format: --name-only %1").arg(commit);
+    QString cmd;
+    if (commit.isEmpty()) {
+        cmd = mGitPath + QObject::tr(" diff --name-only");
+    } else {
+        cmd = mGitPath + QObject::tr(" show --pretty=format: --name-only %1").arg(commit);
+    }
     QByteArray output = run(cmd);
     QList<QByteArray> slist = output.split('\n');
 
@@ -194,9 +255,15 @@ GitEngine::getCommitFileList(const QString& commit, const char* flags)
 }
 
 QStringList 
-GitEngine::getCommitContent(const QString& commit)
+GitEngine::getCommitContent(const QString& commit, const QString& file)
 {
-    QString cmd = mGitPath + QObject::tr(" show -w %1").arg(commit);
+    QString cmd;
+    if (commit.isEmpty()) {
+        cmd = mGitPath + QObject::tr(" diff %1").arg(file);
+    } else {
+        cmd = mGitPath + QObject::tr(" show -w %1 %2").arg(commit).arg(file);
+    }
+
     QByteArray output = run(cmd);
     QList<QByteArray> slist = output.split('\n');
 
@@ -256,3 +323,5 @@ GitEngine::setEngine(const QString& path)
         return false;
     }
 }
+
+

@@ -22,6 +22,7 @@ public:
 protected slots:
     void onTreeItemClicked (QTreeWidgetItem *item, int column);
     void onCmtsTreeItemClicked(QTreeWidgetItem *item, int column);
+    void onCmtsTreeItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem *prev);
     void onNewFileFilter();
 
 protected:

@@ -25,9 +25,11 @@ public:
     QStringList getFileLog(const QString& file, const char* flags);
     QList<Commit*> getFileLog(const QString& file);
     QStringList getFileCommitList(const QString& file, const char* flags);
-    QStringList getCommitFileList(const QString& commit, const char* flags);
+    QStringList getCommitFileList(const QString& commit, const char* flags);/* commit is empty means TOT*/
+    QStringList getCommitBranchList(const QString& commit);
+    QStringList getCommitTagList(const QString& commit);
     QStringList getFileContent(const QString& file, const QString& commit);
-    QStringList getCommitContent(const QString& commit);
+    QStringList getCommitContent(const QString& commit, const QString& file="");
     QString     getRootDir(const QString& file);
     QStringList getWorkspaceFiles(const QString& file, const QString& commit);
     QStringList getCommitsDiff(const QString& file, const QString& commit1, const QString& commit2);

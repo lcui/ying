@@ -87,11 +87,21 @@ YingWin::YingWin(QWidget *parent, Qt::WindowFlags flags)
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     connect(tree,SIGNAL(itemClicked(QTreeWidgetItem*, int)), 
             this, SLOT(onCmtsTreeItemClicked(QTreeWidgetItem*, int)));
+    connect(tree,SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), 
+            this, SLOT(onCmtsTreeItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
+
 
     mMapInfoWin.insert("CommitList", tree);
     commit->addWidget(tree);
 
     QListWidget *list = new QListWidget(right);
+    commit->addWidget(list);
+    mMapInfoWin.insert("TagList", list);
+    commit->setStretchFactor(0, 10);
+
+
+
+    list = new QListWidget(right);
     commit->addWidget(list);
     mMapInfoWin.insert("CommitFiles", list);
     commit->setStretchFactor(0, 10);
@@ -122,6 +132,12 @@ YingWin::onTreeItemClicked (QTreeWidgetItem *item, int column)
 }
 
 void 
+YingWin::onCmtsTreeItemChanged(QTreeWidgetItem *curr, QTreeWidgetItem * /*prev*/)
+{
+    onCmtsTreeItemClicked(curr, 0);
+}
+
+void 
 YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
 {
     if (curr) {
@@ -139,7 +155,18 @@ YingWin::onCmtsTreeItemClicked(QTreeWidgetItem *curr, int column)
                 fileList->addItem(files[i]);
             }
 
-            QStringList content = mpEngine->getCommitContent(commit);
+            /* tag list */
+            if (!commit.isEmpty()) {
+                int prev_count = 0;
+                files = mpEngine->getCommitTagList(commit);
+                fileList = qobject_cast<QListWidget*>(mMapInfoWin["TagList"]);
+                fileList->clear();
+                for(int i=0; i<files.length(); i++) {
+                    fileList->addItem(files[i]);
+                }
+            }
+
+            QStringList content = mpEngine->getCommitContent(commit, mCurrFile);
             for(int i=0; i<content.length(); i++) {
                 txt2html.append((content[i]+'\n').toStdString());
             }
@@ -269,7 +296,7 @@ YingWin::analyzeFile(const QString& file)
         setUpdatesEnabled(false);
         tree->clear();
         QTreeWidgetItem *header = new QTreeWidgetItem();
-        header->setText(0, "Change");
+        header->setText(0, "Message");
         header->setText(1, "Author");
         header->setText(2, "Date");
         tree->setHeaderItem(header);
@@ -277,7 +304,13 @@ YingWin::analyzeFile(const QString& file)
 
         for(int i=0; i<commits.length(); i++) {
             QTreeWidgetItem *item = new QTreeWidgetItem(tree);
-            item->setText(0, commits[i]->comment.split("\n")[0]);
+            QStringList branchs = mpEngine->getCommitBranchList(commits[i]->id);
+            QString str = "";
+            for(int kk=0; kk<branchs.length(); kk++) {
+                str += "<"+branchs[kk]+">";
+            }
+
+            item->setText(0, str + " " + commits[i]->comment.split("\n")[0]);
             item->setText(1, commits[i]->author);
             item->setText(2, commits[i]->date);
             item->setToolTip(0, commits[i]->id);
