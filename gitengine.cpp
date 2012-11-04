@@ -132,6 +132,7 @@ QStringList
 GitEngine::getCommitBranchList(const QString& commit)
 {
     QStringList retlist;
+#if 0
     if (!commit.isEmpty()) {
         QString cmd = mGitPath + 
             QObject::tr(" branch --contains ") + commit;
@@ -146,7 +147,7 @@ GitEngine::getCommitBranchList(const QString& commit)
             }
         }
     }
-
+#endif
     return retlist;
 }
 
